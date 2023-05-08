@@ -1,0 +1,1 @@
+export const BASE_URL = 'https://digitization.simulanis.io:3000';
