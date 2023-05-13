@@ -13,33 +13,28 @@ import {
   Alert,
 } from 'react-native';
 import {ActivityIndicator, Text} from 'react-native-paper';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import SafeArea from '../../Components/ReusableComponent/Safearea';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Heading from '../../Components/ReusableComponent/Heading';
 import COLORS from '../../Assets/Style/Color';
 import {getRequest} from '../../App/fetch';
 import {BASE_URL} from '../../App/api';
+import {userListFromAsyncStorage} from '../../Store/Reducers/UserList';
 // import {showError} from '../../Utils/PopupFunctions';
 export const Home = () => {
   const sheetPosition = useRef(new Animated.Value(0)).current;
+  const minSheetPosition = 20; // Adjust this value as per your requirements
+  const maxSheetPosition = 110; // Adjust this value as per your requirements
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        const {dx, dy} = gestureState;
-        const isVerticalSwipe = Math.abs(dx) < Math.abs(dy);
-        const isTouchInsideBottomSheet =
-          evt.nativeEvent.locationY > 0 && evt.nativeEvent.locationY < 500;
-        return isVerticalSwipe && isTouchInsideBottomSheet;
-      },
-      onPanResponderMove: (evt, gestureState) => {
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
         const dy = gestureState.dy;
-        const newSheetPosition = sheetPosition._value + dy;
 
         // Limit the sheet position to the minimum and maximum allowed values
-        const minSheetPosition = 100;
-        const maxSheetPosition = 500;
+        const newSheetPosition = sheetPosition._value + dy;
         if (
           newSheetPosition >= minSheetPosition &&
           newSheetPosition <= maxSheetPosition
@@ -47,19 +42,18 @@ export const Home = () => {
           sheetPosition.setValue(newSheetPosition);
         }
       },
-      onPanResponderRelease: (evt, gestureState) => {
-        // Snap the bottom sheet to the top or bottom of the screen depending on its position
-        const snapThreshold = 550;
+      onPanResponderRelease: (_, gestureState) => {
+        // Snap the bottom sheet to the nearest position (top or bottom)
         const currentPosition = sheetPosition._value;
-        if (currentPosition < snapThreshold) {
+        if (currentPosition < (minSheetPosition + maxSheetPosition) / 2) {
           Animated.timing(sheetPosition, {
-            toValue: 0,
-            duration: 550,
+            toValue: minSheetPosition,
+            duration: 250,
             useNativeDriver: true,
           }).start();
         } else {
           Animated.timing(sheetPosition, {
-            toValue: 500,
+            toValue: maxSheetPosition,
             duration: 250,
             useNativeDriver: true,
           }).start();
@@ -68,15 +62,22 @@ export const Home = () => {
     }),
   ).current;
 
+  const animatedSheetStyle = {
+    transform: [{translateY: sheetPosition}],
+  };
+
   const Navigation = useNavigation();
 
-  const {AuthReducer} = useSelector(state => state);
+  const {AuthReducer, userList} = useSelector(state => state);
   console.log('reducerData: ', AuthReducer.userData);
+  console.log('userList: ', userList);
 
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
 
   const [clickValue, setClickValue] = useState('');
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     (async () => {
@@ -88,10 +89,34 @@ export const Home = () => {
       )
         .then(res => {
           console.log('Response For dashboard Data:', res);
-          setLoading(false);
           if (res.status == 1) {
             setData(res.data);
             console.log('Data from api Dashboard: ', data);
+            let dataRole = AuthReducer?.userData?.user?.role;
+            console.log('Bearer ' + AuthReducer?.userData.token);
+            var myHeaders = new Headers();
+            myHeaders.append(
+              'Authorization',
+              `Bearer ${AuthReducer?.userData.token}`,
+            );
+
+            var requestOptions = {
+              method: 'GET',
+              headers: myHeaders,
+              redirect: 'follow',
+            };
+
+            fetch(`${BASE_URL}/user/list?role=${dataRole}`, requestOptions)
+              .then(response => response.json())
+              .then(result => {
+                setLoading(false);
+                console.log(result?.data);
+                dispatch(userListFromAsyncStorage(result.data));
+              })
+              .catch(error => {
+                setLoading(false);
+                console.log('error', error);
+              });
           }
         })
         .catch(err => {
@@ -190,7 +215,7 @@ export const Home = () => {
             color: 'black',
             backgroundColor: '#d3d3d3',
           }}>
-          {item.doc_name ? item.doc_name : item.shortDetails}
+          {item.title}
         </Text>
       </View>
     </Pressable>
@@ -455,18 +480,15 @@ export const Home = () => {
                 consectetur, adipisci velit
               </Text>
             </View>
-            <Animated.View
-              style={[
-                styles.bottomSheet,
-                {transform: [{translateY: sheetPosition}]},
-              ]}
-              {...panResponder.panHandlers}>
-              <View style={{paddingBottom: 70}}>
-                <View style={styles.line} />
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  // {...panResponder.panHandlers}
-                >
+            <Animated.View style={[styles.bottomSheet, animatedSheetStyle]}>
+              {/* <View style={{margin: '1%'}}></View> */}
+              <View
+                style={[styles.draggableLine, {marginBottom: '2%'}]}
+                {...panResponder.panHandlers}
+              />
+              <View>
+                {/* <View style={styles.line} /> */}
+                <ScrollView showsVerticalScrollIndicator={false}>
                   <View>
                     <View
                       style={{
@@ -900,21 +922,25 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    // backgroundColor: 'pink',
+  },
+  draggableLine: {
+    width: '30%',
+    height: 12,
+    borderRadius: 10,
+    backgroundColor: 'gray',
+    top: 0,
+    alignContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
   },
   bottomSheet: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '100%',
+    height: '85%',
     position: 'absolute',
     bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    height: 650,
-    alignContent: 'flex-end',
-    // backgroundColor: 'pink',
-    // elevation: 5,
   },
   title: {
     fontSize: 20,
@@ -923,17 +949,6 @@ const styles = StyleSheet.create({
   },
   content: {
     fontSize: 16,
-  },
-  line: {
-    height: 1,
-    width: '20%',
-    alignItems: 'center',
-    backgroundColor: '#CFCFCF',
-    marginVertical: 10,
-    height: 10,
-    // marginHorizontal:'40%',
-    alignContent: 'center',
-    alignSelf: 'center',
-    borderRadius: 10,
+    marginBottom: 10,
   },
 });

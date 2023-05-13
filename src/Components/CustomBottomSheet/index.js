@@ -1,60 +1,74 @@
-import React, { useRef } from 'react';
-import { StyleSheet, View, Text, Animated, PanResponder, TouchableOpacity } from 'react-native';
+import React, {useRef} from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Animated,
+  PanResponder,
+  Pressable,
+} from 'react-native';
 
 const CustomBottomSheet = () => {
+
   const sheetPosition = useRef(new Animated.Value(0)).current;
+  const minSheetPosition = -50; // Adjust this value as per your requirements
+  const maxSheetPosition = 100; // Adjust this value as per your requirements
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return true;
-      },
-      onPanResponderMove: (evt, gestureState) => {
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
         const dy = gestureState.dy;
-        const newSheetPosition = sheetPosition._value + dy;
 
         // Limit the sheet position to the minimum and maximum allowed values
-        const minSheetPosition = 0;
-        const maxSheetPosition = 500;
-        if (newSheetPosition >= minSheetPosition && newSheetPosition <= maxSheetPosition) {
+        const newSheetPosition = sheetPosition._value + dy;
+        if (
+          newSheetPosition >= minSheetPosition &&
+          newSheetPosition <= maxSheetPosition
+        ) {
           sheetPosition.setValue(newSheetPosition);
         }
       },
-      onPanResponderRelease: (evt, gestureState) => {
-        // Snap the bottom sheet to the top or bottom of the screen depending on its position
-        const snapThreshold = 250;
+      onPanResponderRelease: (_, gestureState) => {
+        // Snap the bottom sheet to the nearest position (top or bottom)
         const currentPosition = sheetPosition._value;
-        if (currentPosition < snapThreshold) {
+        if (currentPosition < (minSheetPosition + maxSheetPosition) / 2) {
           Animated.timing(sheetPosition, {
-            toValue: 0,
+            toValue: minSheetPosition,
             duration: 250,
             useNativeDriver: true,
           }).start();
         } else {
           Animated.timing(sheetPosition, {
-            toValue: 500,
+            toValue: maxSheetPosition,
             duration: 250,
             useNativeDriver: true,
           }).start();
         }
       },
-    })
+    }),
   ).current;
+
+  const animatedSheetStyle = {
+    transform: [{translateY: sheetPosition}],
+  };
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.bottomSheet,
-          { transform: [{ translateY: sheetPosition }] },
-        ]}
-        {...panResponder.panHandlers}
-      >
+      <Animated.View style={[styles.bottomSheet, animatedSheetStyle]}>
+        <View style={styles.draggableLine} {...panResponder.panHandlers} />
         <Text style={styles.title}>Custom Bottom Sheet</Text>
-        <Text style={styles.content}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi feugiat purus et arcu feugiat, nec ultrices ipsum tincidunt. Etiam gravida turpis non consectetur rhoncus.</Text>
-        <TouchableOpacity onPress={() => console.log('Button pressed')} style={styles.button}>
-          <Text style={styles.buttonText}>Press Me</Text>
-        </TouchableOpacity>
+        <Text style={styles.content}>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi feugiat
+          purus et arcu feugiat, nec ultrices ipsum tincidunt. Etiam gravida
+          turpis non consectetur rhoncus.
+        </Text>
+        <Pressable
+          onPress={() => {
+            console.log('preeable');
+          }}>
+          <Text>Pressable</Text>
+        </Pressable>
       </Animated.View>
     </View>
   );
@@ -65,14 +79,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    padding: 20,
+  },
+  draggableLine: {
+    width: '100%',
+    height: 10,
+    backgroundColor: 'gray',
+    position: 'absolute',
+    top: 0,
   },
   bottomSheet: {
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     width: '100%',
-    height: '80%',
+    height: '70%',
     position: 'absolute',
     bottom: 0,
   },
@@ -85,18 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 10,
   },
-  button: {
-    backgroundColor: 'blue',
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
-    marginTop: 'auto',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-  },
 });
 
-
-export default CustomBottomSheet
+export default CustomBottomSheet;

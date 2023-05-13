@@ -59,7 +59,7 @@ export const Settings = ({route}) => {
         </Button>
       </View>
       <View style={{backgroundColor: 'rgb(9, 13, 13)', height: 250}}>
-        <Video
+        {/* <Video
           controls={true}
           source={require('../../Assets/Images/video/test-video.mp4')}
           ref={videoRef}
@@ -67,7 +67,7 @@ export const Settings = ({route}) => {
           onError={() => {}}
           style={{width: '100%', height: 210, position: 'absolute', top: 10}}
           resizeMode={'contain'}
-        />
+        /> */}
       </View>
       <View>
         <View style={[{backgroundColor: '#fff', height: 50}, styles.shadow]}>

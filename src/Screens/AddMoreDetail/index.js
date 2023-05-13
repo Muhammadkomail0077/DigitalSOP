@@ -24,8 +24,13 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import Video from 'react-native-video';
 import DropDown from 'react-native-paper-dropdown';
 import {List} from 'react-native-paper';
-import {postRequestWithToken} from '../../App/fetch';
+import {
+  getDataByBodyAndToken,
+  getRequest,
+  postRequestWithToken,
+} from '../../App/fetch';
 import {BASE_URL} from '../../App/api';
+import DropdownComponent from '../../Components/ReusableComponent/DropDown';
 
 export const AddMoreDetail = ({route}) => {
   const Navigation = useNavigation();
@@ -36,37 +41,38 @@ export const AddMoreDetail = ({route}) => {
 
   console.log('thumbnail: ', thumbnail);
 
-  const {AuthReducer} = useSelector(state => state);
+  const {AuthReducer, userList} = useSelector(state => state);
   console.log('reducerData: ', AuthReducer?.userData?.user?.name);
+  console.log('userList: ', userList.userList);
 
   const refRBSheet2 = useRef(null);
   const refRBSheet1 = useRef(null);
 
   const [thumbnail, setThumbnail] = useState('');
+  const [userData, setUserData] = useState([]);
 
+  const [userDataFilter, setUserDataFilter] = useState();
+
+  let specificValueArray;
   useEffect(() => {
     refRBSheet2.current.open();
+
+    specificValueArray = userList.userList.map(obj => [
+      {label: obj?.name, value: obj?.id},
+    ]);
+    console.log('specificValueArray:', specificValueArray[0]);
+    setUserDataFilter(specificValueArray[0]);
   }, []);
 
   const height = Dimensions.get('window').height;
   const FilterHeight = height * 0.9;
 
-  const [expanded, setExpanded] = useState(false);
   const [selectedOption, setSelectedOption] = useState('');
 
   const [title, setTitle] = useState('');
 
   console.log('title: ', title);
 
-  const handlePress = () => {
-    setExpanded(!expanded);
-  };
-
-  const handleOptionPress = option => {
-    setSelectedOption(option);
-    setExpanded(false);
-  };
-  
   const [enable, setEnable] = useState(false);
 
   const openGallery = () => {
@@ -122,13 +128,13 @@ export const AddMoreDetail = ({route}) => {
       }}>
       {item.type == 'image' && (
         <Image
-          source={{uri: item.filename}}
+          source={{uri: item?.filename}}
           style={{width: 35, height: 50, borderRadius: 15, marginVertical: 5}}
         />
       )}
       {item.type == 'video' && (
         <Video
-          source={{uri: item.filename}}
+          source={{uri: item?.filename}}
           ref={videoRef}
           onBuffer={() => {}}
           onError={() => {}}
@@ -146,50 +152,34 @@ export const AddMoreDetail = ({route}) => {
   const [loading, setLoading] = useState(false);
 
   const submitData = () => {
-    if (title == '' || title == undefined) {
-      alert('Please enter the title');
+    if (enable) {
+      const dataSubmit = {
+        files: data,
+        thumnail: thumbnail,
+        doc_name: title,
+        users: [AuthReducer?.userData?.user?.id],
+      };
+      console.log('dataSubmit: ', dataSubmit);
+      setLoading(true);
+      postRequestWithToken(
+        `${BASE_URL}/document/mobile_doc`,
+        dataSubmit,
+        `Bearer ${AuthReducer?.userData.token}`,
+      )
+        .then(res => {
+          setLoading(false);
+          console.log('response from api submit data', res);
+          alert('Your data is share successfully');
+          Navigation.navigate('CurveBottomBar');
+        })
+        .catch(err => {
+          setLoading(false);
+          refRBSheet2.current.open();
+          console.log('Error from sending', err);
+          alert('Something went wront');
+        });
     } else {
-      if (selectedOption == '' || selectedOption == undefined) {
-        alert('Please SelectUser');
-      } else {
-        if (thumbnail == '' || thumbnail == undefined) {
-          alert('Please add thumbnail');
-        } else {
-          console.log('title: ', title);
-          console.log('selectedOption: ', selectedOption);
-          console.log('thumbnail: ', thumbnail);
-          console.log('data: ', data);
-          console.log(
-            'AuthReducer?.userData?.user?.id: ',
-            AuthReducer?.userData?.user?.id,
-          );
-
-          const dataSubmit = {
-            files: data,
-            thumnail: thumbnail,
-            doc_name: title,
-            users: [AuthReducer?.userData?.user?.id],
-          };
-          setLoading(true);
-          postRequestWithToken(
-            `${BASE_URL}/document/mobile_doc`,
-            dataSubmit,
-            `Bearer ${AuthReducer?.userData.token}`,
-          )
-            .then(res => {
-              setLoading(false);
-              console.log('response from api submit data', res);
-              alert('Your data is share successfully');
-              Navigation.navigate('CurveBottomBar');
-            })
-            .catch(err => {
-              setLoading(false);
-              refRBSheet2.current.open();
-              console.log('Error from sending', err);
-              alert('Something went wront');
-            });
-        }
-      }
+      alert('Please complete the form');
     }
   };
 
@@ -209,6 +199,8 @@ export const AddMoreDetail = ({route}) => {
       }
     }
   }, [title, selectedOption, thumbnail]);
+
+  const [value, setValue] = React.useState();
 
   if (loading) {
     return <ActivityIndicator style={{flex: 1}} size={50} color="red" />;
@@ -374,7 +366,7 @@ export const AddMoreDetail = ({route}) => {
                     label="D-SOP Title"
                   />
                   <View style={{marginTop: '5%'}}>
-                    <List.Section>
+                    {/* <List.Section>
                       <List.Accordion
                         style={{
                           backgroundColor: 'white',
@@ -399,7 +391,13 @@ export const AddMoreDetail = ({route}) => {
                           }
                         />
                       </List.Accordion>
-                    </List.Section>
+                    </List.Section> */}
+                    <DropdownComponent
+                      data={userDataFilter}
+                      defaultValue={'Select User'}
+                      value={selectedOption}
+                      setValue={setSelectedOption}
+                    />
                   </View>
                 </View>
                 <View

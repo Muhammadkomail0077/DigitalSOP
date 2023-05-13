@@ -1,49 +1,114 @@
-import React, {useState} from 'react';
-import {View, Text, Image, StyleSheet} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, Image, StyleSheet, Alert} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
-import {Button, List, TextInput} from 'react-native-paper';
+import {ActivityIndicator, Button, List, TextInput} from 'react-native-paper';
+import {useSelector} from 'react-redux';
+import {BASE_URL} from '../../App/api';
+import {postRequest, postRequestWithToken} from '../../App/fetch';
 import COLORS from '../../Assets/Style/Color';
+import DropdownComponent from '../../Components/ReusableComponent/DropDown';
+
 const Contact = () => {
   const [name, setName] = React.useState('');
   const [lname, setLName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [mobile, setMobile] = React.useState('');
-  const [site, setSite] = React.useState('');
-  const [issue, setIssue] = React.useState('');
   const [value, setValue] = React.useState('');
 
-  const handleSubmit = () => {
+  const {AuthReducer} = useSelector(state => state);
 
+  console.log('AuthReducer: ', AuthReducer.userData);
+
+  const handleSubmit = async () => {
+    if (enable) {
+      const data = {
+        firstName: name,
+        lastName: lname,
+        email: email,
+        mobile: mobile,
+        discription: value,
+        site: valueSite,
+        issue: valueOption,
+        type: 'mobile',
+      };
+      console.log('data:', data);
+
+      console.log('Bearer ' + AuthReducer?.userData.token);
+      setLoading(true);
+      postRequestWithToken(
+        `${BASE_URL}/user/contactUs`,
+        data,
+        `Bearer ${AuthReducer?.userData.token}`,
+      )
+        .then(res => {
+          console.log('Response For dashboard Data:', res);
+          setLoading(false);
+          alert(res.message);
+          setName('');
+          setLName('');
+          setEmail('');
+          setMobile('');
+          setValue('');
+          setValueSite('');
+          setValueOption('');
+        })
+        .catch(err => {
+          setLoading(false);
+          alert(err);
+        });
+    } else {
+      Alert.alert('Missing', 'Please Complete the form');
+    }
   };
 
-  const handlePress = () => {
-    setExpanded(!expanded);
-  };
+  const dataSite = [
+    {label: 'Admin', value: 'Admin'},
+    {label: 'User', value: 'User'},
+  ];
 
-  const handleOptionPress = option => {
-    setSelectedOption(option);
-    setExpanded(false);
-  };
+  const dataOption = [
+    {label: 'Technical', value: 'Technical'},
+    {label: 'Network Problem', value: 'networkProblem'},
+  ];
 
-  const [selectedOption, setSelectedOption] = useState('');
-  const [expanded, setExpanded] = useState(false);
+  const [valueSite, setValueSite] = useState(null);
+  const [valueOption, setValueOption] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handlePress1 = () => {
-    setExpanded1(!expanded);
-  };
+  const [enable, setEnable] = useState(false);
 
-  const handleOptionPress1 = option => {
-    setSelectedOption1(option);
-    setExpanded1(false);
-  };
-
-  const [selectedOption1, setSelectedOption1] = useState('');
-  const [expanded1, setExpanded1] = useState(false);
-
+  useEffect(() => {
+    if (name == '' || name == undefined) {
+    } else {
+      if (lname == '' || lname == undefined) {
+      } else {
+        if (email == '' || email == undefined) {
+        } else {
+          if (mobile == '' || mobile == undefined) {
+          } else {
+            if (value == '' || value == undefined) {
+            } else {
+              if (valueSite == '' || valueSite == undefined) {
+              } else {
+                if (valueOption == '' || valueOption == undefined) {
+                } else {
+                  setEnable(true);
+                  console.log('enable', enable);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [name, lname, email, mobile, value, valueSite, valueOption]);
+  if (loading) {
+    return <ActivityIndicator style={{flex: 1}} size={50} color="red" />;
+  }
   return (
     // <SafeAreaView>
-    <ScrollView style={{flex: 1, marginBottom: 50}}>
-      <View style={{flex: 1, backgroundColor: '#f6f6f6'}}>
+    <ScrollView style={{flex: 1}}>
+      <View style={{flex: 1, backgroundColor: '#f6f6f6', marginBottom: 100}}>
         <View style={styles.headerBox}>
           <Image
             style={styles.imgStyle}
@@ -53,13 +118,13 @@ const Contact = () => {
         </View>
         <View style={styles.box}>
           <TextInput
-            label="firstName"
+            label="First Name"
             value={name}
             onChangeText={setName}
             style={styles.input}
           />
           <TextInput
-            label="LastName"
+            label="Last Name"
             value={lname}
             onChangeText={setLName}
             style={styles.input}
@@ -76,55 +141,22 @@ const Contact = () => {
             value={mobile}
             onChangeText={setMobile}
             style={styles.input}
-            secureTextEntry
           />
           <View style={{marginVertical: '1%', marginRight: '15%'}}>
-            <List.Section>
-              <List.Accordion
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: 10,
-                }}
-                title={selectedOption ? selectedOption : 'Site'}
-                expanded={expanded}
-                onPress={handlePress}>
-                <List.Item
-                  style={{
-                    backgroundColor: 'white',
-                    borderRadius: 10,
-                    marginTop: 5,
-                  }}
-                  title={'Admin'}
-                  onPress={() =>
-                    handleOptionPress('Admin')
-                  }
-                />
-              </List.Accordion>
-            </List.Section>
+            <DropdownComponent
+              data={dataSite}
+              defaultValue={'Site'}
+              value={valueSite}
+              setValue={setValueSite}
+            />
           </View>
           <View style={{marginVertical: '1%', marginRight: '15%'}}>
-            <List.Section>
-              <List.Accordion
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: 10,
-                }}
-                title={selectedOption1 ? selectedOption1 : 'Technical MenuItem'}
-                expanded={expanded1}
-                onPress={handlePress1}>
-                <List.Item
-                  style={{
-                    backgroundColor: 'white',
-                    borderRadius: 10,
-                    marginTop: 5,
-                  }}
-                  title={'Network Problem'}
-                  onPress={() =>
-                    handleOptionPress1('Network Problem')
-                  }
-                />
-              </List.Accordion>
-            </List.Section>
+            <DropdownComponent
+              data={dataOption}
+              defaultValue={'Select Options'}
+              value={valueOption}
+              setValue={setValueOption}
+            />
           </View>
           <TextInput
             label="Type your message here"
@@ -136,7 +168,7 @@ const Contact = () => {
           />
           <Button
             style={{
-              backgroundColor: 'black',
+              backgroundColor: enable == false ? '#d3d3d3' : COLORS.dark,
               color: COLORS.white,
               width: '85%',
               marginTop: '4%',

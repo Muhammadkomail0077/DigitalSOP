@@ -19,6 +19,8 @@ export default function Input(props) {
         textColor={COLORS.dark}
         label={props.label}
         placeholder={props.placeholder}
+        
+        // placeholderTextColor={'pink'}
         disabled={props.status}
         outlineColor={props.outline}
         ref={props.ref}

@@ -1,17 +1,19 @@
 import * as React from 'react';
 import {View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import { Home } from '../../Screens/Home';
-import { Notifications } from '../../Screens/Notifications';
-import { Profile } from '../../Screens/Profile';
-import { Settings } from '../../Screens/Settings';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Home} from '../../Screens/Home';
+import {Notifications} from '../../Screens/Notifications';
+import {Profile} from '../../Screens/Profile';
+import {Settings} from '../../Screens/Settings';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {SharedSOP} from '../../Screens/SharedSop';
+import {Privacy} from '../../Screens/Privacy';
+import Contact from '../../Screens/Contact';
 
 const Tab = createBottomTabNavigator();
 
 export default function SimpleBottomTab({navigation}) {
-
-    const [mark, setMark] = React.useState(false);
+  const [mark, setMark] = React.useState(false);
 
   return (
     <>
@@ -22,16 +24,16 @@ export default function SimpleBottomTab({navigation}) {
             let width;
 
             if (route.name === 'Home') {
-              iconName = focused ? 'home' : 'home-outline';
+              iconName = focused ? 'home' : 'home';
               // width = focused ?
-            } else if (route.name === 'Notifications') {
-              iconName = focused ? 'calendar-month' : 'calendar-month-outline';
-              // mark = focused ? setMark(true):setMark(false)
-              // focused ? setMark == true : setMark == false
-            } else if (route.name === 'Profile') {
-              iconName = focused ? 'cards-heart' : 'cards-heart-outline';
-            } else if (route.name === 'Settings') {
-              iconName = focused ? 'segment' : 'segment';
+            } else if (route.name === 'SharedSOP') {
+              iconName = focused
+                ? 'ios-share-social-outline'
+                : 'ios-share-social-outline';
+            } else if (route.name === 'Privacy') {
+              iconName = focused ? 'shield-outline' : 'shield-outline';
+            } else if (route.name === 'Contact') {
+              iconName = focused ? 'newspaper-outline' : 'newspaper-outline';
             }
 
             return (
@@ -51,7 +53,7 @@ export default function SimpleBottomTab({navigation}) {
                         width: '60%',
                       }
                 }>
-                <Icon
+                <Ionicons
                   name={iconName}
                   style={{top: 10, textAlign: 'center'}}
                   size={28}
@@ -65,12 +67,10 @@ export default function SimpleBottomTab({navigation}) {
           // tabBarInactiveTintColor: '',
           tabBarShowLabel: false,
 
-          tabBarItemStyle: mark
-            && {
-                borderTopWidth: 2,
-                borderTopColor: 'black',
-              }
-            
+          tabBarItemStyle: mark && {
+            borderTopWidth: 2,
+            borderTopColor: 'black',
+          },
 
           // headerTintColor:COLORS.primary
         })}>
@@ -81,18 +81,18 @@ export default function SimpleBottomTab({navigation}) {
         />
         <Tab.Screen
           options={{headerShown: false}}
-          name="Notifications"
-          component={Notifications}
+          name="SharedSOP"
+          component={SharedSOP}
         />
         <Tab.Screen
           options={{headerShown: false}}
-          name="Profile"
-          component={Profile}
+          name="Privacy"
+          component={Privacy}
         />
         <Tab.Screen
           options={{headerShown: false}}
-          name="Settings"
-          component={Settings}
+          name="Contact"
+          component={Contact}
         />
       </Tab.Navigator>
     </>

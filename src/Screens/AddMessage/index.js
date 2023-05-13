@@ -412,7 +412,7 @@ export const AddMessage = ({route}) => {
                         style={{
                           borderRadius: 50,
                           width: '100%',
-                          marginHorizontal: '5%',
+                          // marginHorizontal: '1%',
                           marginVertical: 10,
                         }}>
                         {data[data.length - 1]?.type == 'image' && (
@@ -453,6 +453,7 @@ export const AddMessage = ({route}) => {
                       numberOfLines={4}
                       maxLength={40}
                       placeholder={'Enter Description'}
+                      placeholderTextColor={'black'}
                       onChangeText={txt => {
                         setDescription(txt);
                       }}
